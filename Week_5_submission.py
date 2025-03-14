@@ -809,11 +809,12 @@ with tab6:
             with col4:
                 classweight = st.radio('Class weight', ["['balanced', 'balanced_subsample']", 'Manual'], index=0, horizontal=True)
 
+            # Grid Search CV and class_weight = {0: 1, 1: neg / pos * multiplication_factor}
             if classweight == 'Manual':
                 with col4:
                     weight = st.number_input('Enter x (class_weights = {0\: 1, 1: neg/pos * x})', min_value=1.0, max_value=5.0, value=1.0, step=0.5)
                 
-                # Grid Search CV and class_weight = {0: 1, 1: neg / pos * multiplication_factor}
+                
                 X_train, X_test, y_train, y_test = prepare_data(data)
 
                 neg, pos = y_train.value_counts()
@@ -839,7 +840,31 @@ with tab6:
                 best_model = grid_search.best_estimator_
                 y_pred = best_model.predict(X_test)
                 y_pred_proba = best_model.predict_proba(X_test)[:, 1]
-                evaluate_model(y_test, y_pred, y_pred_proba, f"Random Forest (cv = {cross_val}) and (neg/pos * {weight})")      
+                evaluate_model(y_test, y_pred, y_pred_proba, f"Random Forest ({estimator_1},{estimator_2},{estimator_3} est, {depth_1}, {depth_2}, {depth_3} dep, cv={cross_val}, neg/pos * {weight})")
+
+            # Grid Search CV and class_weight = ['balanced', 'balanced_subsample']
+            else:
+                X_train, X_test, y_train, y_test = prepare_data(data)
+                model = RandomForestClassifier(random_state=42, class_weight='balanced')
+
+                param_grid = {
+                    'n_estimators': [estimator_1, estimator_2, estimator_3],
+                    'max_depth': [depth_1, depth_2, depth_3],
+                    'min_samples_split': [2, 5, 10],
+                    'min_samples_leaf': [1, 2, 4],
+                    'class_weight': ['balanced', 'balanced_subsample']
+                }
+
+                grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=cross_val, scoring='f1', n_jobs=-1)
+                grid_search.fit(X_train, y_train)
+
+                best_params = grid_search.best_params_
+                print(f"Best Parameters: {best_params}")
+
+                best_model = grid_search.best_estimator_
+                y_pred = best_model.predict(X_test)
+                y_pred_proba = best_model.predict_proba(X_test)[:, 1]
+                evaluate_model(y_test, y_pred, y_pred_proba, f"Random Forest ({estimator_1},{estimator_2},{estimator_3} est, {depth_1}, {depth_2}, {depth_3} dep, cv = {cross_val}, cw [b, b_subsmpl])")    
 
     
     # st.write(st.session_state.metrics_df)
