@@ -41,7 +41,7 @@ st.markdown(
 # Title and problem statement
 st.title("Loan Approval Prediction 📊")
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Dataset Overview", "Variables", "Datatypes", "Sunburst", "Correlation Matrix", "Prediction"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Dataset Overview", "Features", "Datatypes", "Sunburst", "Correlation Matrix", "Prediction"])
 
 with tab1:
     st.subheader("Problem statement")
@@ -62,22 +62,22 @@ with tab1:
 
     df = load_data()
 
-    # df = pd.read_csv('loan_dataset.csv')
-    new_column_names = {
-                        'person_age': 'age',
-                        'person_income': 'income',
-                        'person_home_ownership': 'home_ownership',
-                        'person_emp_length': 'emp_length',
-                        'loan_amnt': 'loan_amount',
-                        'cb_person_default_on_file': 'cb_default',
-                        'cb_person_cred_hist_length': 'cb_cred_hist',
-                        }
-    df = df.rename(columns=new_column_names)
+    # # df = pd.read_csv('loan_dataset.csv')
+    # new_column_names = {
+    #                     'person_age': 'age',
+    #                     'person_income': 'income',
+    #                     'person_home_ownership': 'home_ownership',
+    #                     'person_emp_length': 'emp_length',
+    #                     'loan_amnt': 'loan_amount',
+    #                     'cb_person_default_on_file': 'cb_default',
+    #                     'cb_person_cred_hist_length': 'cb_cred_hist',
+    #                     }
+    # df = df.rename(columns=new_column_names)
 
-    # Drop outliers
-    df = df[df['age'] != 123]
-    df = df[df['emp_length'] != 123]
-    df = df[df['income'] <= 1000000]
+    # # Drop outliers
+    # df = df[df['age'] != 123]
+    # df = df[df['emp_length'] != 123]
+    # df = df[df['income'] <= 1000000]
 
     
 
@@ -124,10 +124,19 @@ with tab1:
 
     with tab2:
         st.markdown("##### Column Inspection")
+        col1, col2 = st.columns(2)
 
-        def plot_graphs(df):
-            column = st.selectbox("Select a column to visualize", df.columns)
+        with col1:
+            column_type = st.selectbox('Select datatype of column', ['Categorical', 'Numerical'], key="selectbox_1", help="Select the type of column you want to visualize")
+            if column_type == 'Numerical':
+                selected_cols = [col for col in df.columns if df[col].dtype in ['int64', 'float64']]
+            else:
+                selected_cols = [col for col in df.columns if df[col].dtype == 'object']
+        with col2:
+            selected_column = st.selectbox("Select a column to visualize", selected_cols, help="Select the column you want to visualize")
+                
 
+        def plot_graphs(df, column):
             # Define color mapping
             color_discrete_map = {0: 'lightcoral', 1: 'mediumaquamarine'}
 
@@ -258,7 +267,7 @@ with tab1:
                     with col4:
                         st.plotly_chart(fig_stacked_bar, use_container_width=True)
 
-        plot_graphs(df)
+        plot_graphs(df, selected_column)
 
 
 with tab3:
@@ -266,13 +275,13 @@ with tab3:
     col1, col2 = st.columns(2)
 
     with col1:
-        col_type = st.selectbox('Select datatype of column', ['Numerical', 'Categorical'])
+        col_type = st.selectbox('Select datatype of column', ['Categorical', 'Numerical'], key="selectbox_2", help="Select the type of column you want to visualize")
 
     with col2:
         if col_type == 'Numerical':
-            plot_type = st.selectbox('Select type of plot', ['Histogram', 'Boxplot', 'KDE'])
+            plot_type = st.selectbox('Select type of plot', ['Histogram', 'Boxplot', 'KDE'], help="Select the type of plot you want to visualize")
         else:
-            plot_type = st.selectbox('Select type of plot', ['Bar', 'Grouped Bar', 'Stacked Bar'])
+            plot_type = st.selectbox('Select type of plot', ['Bar', 'Grouped Bar', 'Stacked Bar'], help="Select the type of plot you want to visualize")
 
     # Function to create subplots layout
     def create_subplots(num_plots, num_cols=4):
@@ -391,8 +400,8 @@ with tab3:
         if plot_type == 'Histogram':
             st.markdown('**Histograms of numerical columns**')
             plot_columns(df, numerical_columns, num_rows, num_cols, plot_histogram)
-            st.markdown("""
-                            - **Findings:** 
+            with st.expander("Findings"):
+                st.markdown("""
                                 - Dataset predominantly consists of younger population. It is reasonable to assume that the employement length and credit history almost follows a similar distribution due to this reason.
                                 - Majority of the income lies within 200k, with very few making over 800k.
                                 - Loan amount and interest rate seem to be random
@@ -402,19 +411,20 @@ with tab3:
         elif plot_type == 'Boxplot':
             st.markdown('**Box plot of numerical columns**')
             plot_columns(df, numerical_columns, num_rows, num_cols, plot_boxplot)
-            st.markdown("""
-                            - **Findings:**
+            with st.expander("Findings"):
+                st.markdown("""
                                 - Much of our learning here mirrors similar finidings from the histograms above. However we can visualize the outliers much more clearly.""")
 
         elif plot_type == 'KDE':
             st.markdown('**KDE plots of numerical columns (by loan_status)**')
             color_discrete_map = {0: 'lightcoral', 1: 'mediumaquamarine'}
             plot_columns(df, numerical_columns, num_rows, num_cols, plot_kde, color_discrete_map=color_discrete_map)
-            st.markdown("""
-                            - **Findings:**
+            with st.expander("Findings"):
+                st.markdown("""
                                 - Loan status does not seem to vary with age and credit history length
                                 - Lower ranges of income and employement length seems to have higher peaks for loan_status = 1
                                 - Higher loan amount, interest rate and loan percent of income seems to have higher peaks for loan_status = 1""")
+
     elif col_type == 'Categorical':
         categorical_columns = [col for col in df.columns if df[col].dtype == 'object' and col != 'id']
         num_plots = len(categorical_columns)
@@ -423,8 +433,8 @@ with tab3:
         if plot_type == 'Bar':
             st.markdown('**Bar plots of categorical columns**')
             plot_columns(df, categorical_columns, num_rows, num_cols, plot_bar)
-            st.markdown("""
-                            - **Findings:**
+            with st.expander("Findings"):
+                st.markdown("""
                                 - Home ownership: Rent and Mortgage are most common modes of applicants' housing
                                 - Loan intent: Loans are taken in large number across almost all categories with EDUCATION being the highest and HOMEINPROVEMENT being the lowest among them.
                                 - Loan grade: Low risk loans (A, B, C) are more in number than high risk loans (D and above)
@@ -434,16 +444,16 @@ with tab3:
             st.markdown('**Grouped bar plots of categorical columns (by loan_status)**')
             color_discrete_map = {0: 'lightcoral', 1: 'mediumaquamarine'}
             plot_columns(df, categorical_columns, num_rows, num_cols, plot_grouped_bar, color_discrete_map=color_discrete_map)
-            st.markdown("""
-                            - **Finidings:**
+            with st.expander("Findings"):
+                st.markdown("""
                                 - loan_status = 0 seems to dominate in almost every set of categorical variables except for high risk loans (D to G) under loan_grade.""")
 
         elif plot_type == 'Stacked Bar':
             st.markdown('**Stacked bar plots of categorical columns (by loan_status)**')
             color_discrete_map = {0: 'lightcoral', 1: 'mediumaquamarine'}
             plot_columns(df, categorical_columns, num_rows, num_cols, plot_stacked_bar, color_discrete_map=color_discrete_map)
-            st.markdown("""
-                            - **Findings:**
+            with st.expander("Findings"):
+                st.markdown("""
                                 - These stacked bar charts effectively visualizes the percentage distribution of target variable among the categorical variables.""")
 
 with tab4:
@@ -454,8 +464,8 @@ with tab4:
     df_cat = df[categorical_columns]
 
     # Allow user to select columns
-    parent_column = st.selectbox("Select Parent Column", df_cat.columns)
-    child_column = st.selectbox("Select Child Column", [col for col in categorical_columns if col != parent_column])
+    parent_column = st.selectbox("Select Parent Column", df_cat.columns, help="Primary category upon which the chart will be based")
+    child_column = st.selectbox("Select Child Column", [col for col in categorical_columns if col != parent_column], help="Secondary category that will be nested within the parent category")
 
     # Group the data by the parent and child columns and count occurrences
     grouped_df = (
@@ -512,26 +522,28 @@ with tab5:
 
     st.table(corr_matrix_1.style.background_gradient(cmap="coolwarm").format("{:.2f}"))
 
-    st.markdown("""
-                - **Inferences:**
-                    - From this correlation plot, we can verify that higher the loan grade, higher the interest rate. But since their correlation is as high as 0.94, we can proceed to drop loan_grade and keep only loan_interest_rate to avoid multicollinearity.
-                    - Age and credit history having a high correlation of 0.88. It is obvious that higher the age, the longer their credit histories would be. We can drop the person_age columnm as well.
+    with st.expander("Findings"):
+        st.markdown("""
+                    - **Inferences:**
+                        - From this correlation plot, we can verify that higher the loan grade, higher the interest rate. But since their correlation is as high as 0.94, we can proceed to drop loan_grade and keep only loan_interest_rate to avoid multicollinearity.
+                        - Age and credit history having a high correlation of 0.88. It is obvious that higher the age, the longer their credit histories would be. We can drop the person_age columnm as well.
 
-                - **Other observations:**
-                    - cb_default_on_file has a correlation of 0.55 with loan_grade and 0.94 with loan_interest_rate. This means that the loans for defaulters are usually associated with high risk. Hence, the higher interest rate and grade.
-                    - loan_amount has a high correlation of 0.65 with loan_percent_income
-                    - loan_amount has a positive correlation of 0.34 with person_income
+                    - **Other observations:**
+                        - cb_default_on_file has a correlation of 0.55 with loan_grade and 0.94 with loan_interest_rate. This means that the loans for defaulters are usually associated with high risk. Hence, the higher interest rate and grade.
+                        - loan_amount has a high correlation of 0.65 with loan_percent_income
+                        - loan_amount has a positive correlation of 0.34 with person_income
 
-                - **Positive correlations with target variable (loan_status):**
-                    - loan_grade
-                    - loan_interest_rate
-                    - loan_percent_income
-                    - cb_person_default_on_file
-                """)
+                    - **Positive correlations with target variable (loan_status):**
+                        - loan_grade
+                        - loan_interest_rate
+                        - loan_percent_income
+                        - cb_person_default_on_file
+                    """)
 
     df_1.drop(['age', 'loan_grade'], axis=1, inplace=True)
 
-    st.markdown('---')
+    # st.markdown('---')
+    st.text("")
     st.write("##### Correlation Matrix Tables (after one-hot encoding `loan_intent` and `home_ownership`)")
     df_2 = df_1.copy()
 
@@ -562,30 +574,32 @@ with tab5:
     # Close the plot to avoid memory issues
     plt.close()
 
-    st.markdown("""
-                - **Key inferences:**
-                    - loan_amount vs loan_int_rate (0.65): indicates that higher loan amounts tend to come with higher interest rates.
-                    - cb_default_on_file vs loan_int_rate (0.5): indicates that people who defaulted on a loan in the past tend to receive higher interest rates as they are considered high risk.
-                    - loan_percent_income vs loan_interest (0.38): suggests that as the percentage of income dedicated to the loan increases, the interest rate also tends to increase.
-                    - person_income vs loan_amount (0.34): suggests that higher-income individuals tend to take larger loans.
-                    - home_ownership vs person_income and person_emp_length:
-                        - Mortgage ownership shows a positive correlation with income (0.30) and employement_length (0.29), indicating that mortgage payment is most common among people with higher incomes and those who are well into their career years.
-                        - Renting is negatively correlated with income (-0.28) and employement_length (-0.29), indicating renters generally have lower incomes and is usually associated with people who are in their early stages of career.
-                    - employment_length vs income (0.18): this weak to moderate positive correlation suggests that longer employment is somewhat associated with higher income.
+    with st.expander("Findings"):
+        st.markdown("""
+                    - **Key inferences:**
+                        - loan_amount vs loan_int_rate (0.65): indicates that higher loan amounts tend to come with higher interest rates.
+                        - cb_default_on_file vs loan_int_rate (0.5): indicates that people who defaulted on a loan in the past tend to receive higher interest rates as they are considered high risk.
+                        - loan_percent_income vs loan_interest (0.38): suggests that as the percentage of income dedicated to the loan increases, the interest rate also tends to increase.
+                        - person_income vs loan_amount (0.34): suggests that higher-income individuals tend to take larger loans.
+                        - home_ownership vs person_income and person_emp_length:
+                            - Mortgage ownership shows a positive correlation with income (0.30) and employement_length (0.29), indicating that mortgage payment is most common among people with higher incomes and those who are well into their career years.
+                            - Renting is negatively correlated with income (-0.28) and employement_length (-0.29), indicating renters generally have lower incomes and is usually associated with people who are in their early stages of career.
+                        - employment_length vs income (0.18): this weak to moderate positive correlation suggests that longer employment is somewhat associated with higher income.
 
-                - **Correlations with target_variable (loan_status):**
-                    - loan_intents have weak correlations with loan_status, meaning the purpose of the loan might not be a strong predictor.
-                    - person_income has a weak to moderate negative correlated with loan_status (-0.18)
-                    - loan_amount (0.14) and person_default_on_file (0.19) has weak to moderate positive correlations
-                    - loan_interest_rate (0.34) and loan_percent_income (0.38) have moderate positive correlations
-                    - home_ownership_MORTGAGE (-0.20) and home_ownership_RENT (0.24) have moderate correlations
-                """)
+                    - **Correlations with target_variable (loan_status):**
+                        - loan_intents have weak correlations with loan_status, meaning the purpose of the loan might not be a strong predictor.
+                        - person_income has a weak to moderate negative correlated with loan_status (-0.18)
+                        - loan_amount (0.14) and person_default_on_file (0.19) has weak to moderate positive correlations
+                        - loan_interest_rate (0.34) and loan_percent_income (0.38) have moderate positive correlations
+                        - home_ownership_MORTGAGE (-0.20) and home_ownership_RENT (0.24) have moderate correlations
+                    """)
 
 
 with tab6:
     data = df_encoded.copy()
     st.write("##### Dataframe for modeling:")
     st.write(data.head())
+    st.write("---")
 
     # Initialize session state for metrics_df
     if 'metrics_df' not in st.session_state:
@@ -636,7 +650,7 @@ with tab6:
             index=0            # Default selected option (index 0 is 'Logistic Regression')
         )
     with col2:
-        thershold_value = st.number_input('Choose a threshold to color cells', min_value=0.50, max_value=1.0, value=0.75, step=0.05)
+        thershold_value = st.number_input('Choose a threshold to color cells', min_value=0.50, max_value=1.0, value=0.75, step=0.05, help="Values great than this will be colored green and less than this will be colored red")
 
     # Logistic Regression
     if selected_model == 'Logistic Regression':
@@ -654,9 +668,9 @@ with tab6:
     elif selected_model == 'KNN':
         col1, col2, col3, col4 = st.columns(4)
 
-        neighbours = col1.number_input('n_neighbors', min_value=1, max_value=20, value=5, step=1)
-        weights = col2.radio('weights', ['uniform', 'distance'], index=0, horizontal=True)
-        algo = col3.radio('algorithm', ["auto", "ball_tree", "kd_tree", "brute"], index=0, horizontal=True)
+        neighbours = col1.number_input('n_neighbors', min_value=1, max_value=20, value=5, step=1, help="Number of neighbors to use")
+        weights = col2.radio('weights', ['uniform', 'distance'], index=0, horizontal=True, help="Weight function used in prediction")
+        algo = col3.radio('algorithm', ["auto", "ball_tree", "kd_tree", "brute"], index=0, horizontal=True, help="Algorithm used to compute the nearest neighbors")
 
         X_train, X_test, y_train, y_test = prepare_data(data)
 
@@ -677,8 +691,8 @@ with tab6:
 
         col1, col2 = st.columns(2)
 
-        estimators = col1.number_input('n_estimators', min_value=50, max_value=1000, value=100, step=50)
-        rate = col2.number_input('learning_rate', min_value=0.01, max_value=0.5, value=0.1, step=0.01)
+        estimators = col1.number_input('n_estimators', min_value=50, max_value=1000, value=100, step=50, help="Number of weak learners to train iteratively (in increments of 50)")
+        rate = col2.number_input('learning_rate', min_value=0.01, max_value=0.5, value=0.1, step=0.01, help="Weight applied to each weak learner (in increments of 0.01)")
 
         X_train, X_test, y_train, y_test = prepare_data(data)
 
@@ -705,10 +719,10 @@ with tab6:
     elif selected_model == 'XGBoost':
         col1, col2, col3, col4 = st.columns(4)
 
-        estimators = col1.number_input('n_estimators', min_value=50, max_value=1000, value=100, step=50)
-        depth = col2.number_input('max_depth', min_value=3, max_value=10, value=5, step=1)
-        rate = col3.number_input('learning_rate', min_value=0.01, max_value=0.5, value=0.1, step=0.01)
-        weight = col4.number_input('Enter x (class_weights = {0\: 1, 1: neg/pos * x})', min_value=1.0, max_value=5.0, value=1.0, step=0.5)
+        estimators = col1.number_input('n_estimators', min_value=50, max_value=1000, value=100, step=50, help="Number of boosting rounds (trees)")
+        depth = col2.number_input('max_depth', min_value=3, max_value=10, value=5, step=1, help="Maximum depth of each decision tree")
+        rate = col3.number_input('learning_rate', min_value=0.01, max_value=0.5, value=0.1, step=0.01, help="Step size shrinkage applied to tree contributions.")
+        weight = col4.number_input('Enter x (class_weights = {0\: 1, 1: neg/pos * x})', min_value=1.0, max_value=5.0, value=1.0, step=0.5, help="Multiplication factor for the minority class")
 
         # XGBoost with different weights
         X_train, X_test, y_train, y_test = prepare_data(data)
@@ -735,22 +749,24 @@ with tab6:
 
     # RF
     else:
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns([1.1, 1.5, 1.5, 1, 1])
 
         with col1:
-            gridsearch = st.radio('GridSearchCV', ['Add', 'Remove'], index=1, horizontal=True)
+            sub_col1, sub_col2 = st.columns(2)
+            with sub_col1:
+                gridsearch = st.radio('GridSearchCV', ['Add', 'Remove'], index=1, horizontal=True, help="To exhaustively search a parameter grid and evaluate model using cross-validation")
         
         if gridsearch == 'Remove':
             with col2:
-                estimators = st.number_input('n_estimators', min_value=50, max_value=1000, value=100, step=50)
+                estimators = st.number_input('n_estimators', min_value=50, max_value=1000, value=100, step=50, help="Number of trees in the forest")
             with col3:
-                depth = st.number_input('max_depth', min_value=2, max_value=10, value=5, step=1)
+                depth = st.number_input('max_depth', min_value=2, max_value=10, value=5, step=1, help="Maximum depth of the tree")
             with col4:
-                classweight = st.radio('Class weight', ['Balanced', 'Manual'], index=0, horizontal=True)
+                classweight = st.radio('Class weight', ['Balanced', 'Manual'], index=0, horizontal=True, help="Choose class weight to handle class imbalance")
 
             if classweight == 'Manual':
-                with col4:
-                    weight = st.number_input('Enter x (class_weights = {0\: 1, 1: neg/pos * x})', min_value=1.0, max_value=5.0, value=1.0, step=0.5)
+                with col5:
+                    weight = st.number_input('Enter x (class_weights = {0\: 1, 1: neg/pos * x})', min_value=1.0, max_value=5.0, value=1.0, step=0.5, help="Multiplication factor for the minority class")
 
                 # No Grid Search CV and class_weight = {0: 1, 1: neg / pos * multiplication_factor}
                 X_train, X_test, y_train, y_test = prepare_data(data)
@@ -789,30 +805,28 @@ with tab6:
 
 
         else:
-            with col1:
-                cross_val = st.number_input('Enter number of cross-validation folds', min_value=3, max_value=10, value=5, step=1)
+            with sub_col2:
+                cross_val = st.number_input('cv', min_value=3, max_value=10, value=5, step=1, help="Number of folds in cross-validation")
 
             with col2:
-                st.write("Enter 3 values for n_estimator array")
                 est_col1, est_col2, est_col3 = st.columns(3)
-                estimator_1 = est_col1.number_input('1', min_value=50, max_value=1000, value=100, step=50)
-                estimator_2 = est_col2.number_input('2', min_value=50, max_value=1000, value=200, step=50)
-                estimator_3 = est_col3.number_input('3', min_value=50, max_value=1000, value=300, step=50)
+                estimator_1 = est_col1.number_input('n_estimators', min_value=50, max_value=1000, value=100, step=50, help="Number of trees in the forest (array of 3 values)")
+                estimator_2 = est_col2.number_input('', min_value=50, max_value=1000, value=200, step=50)
+                estimator_3 = est_col3.number_input('', min_value=50, max_value=1000, value=300, step=50)
 
             with col3:
-                st.write("Enter 3 values for max_depth array")
                 dep_col1, dep_col2, dep_col3 = st.columns(3)
-                depth_1 = dep_col1.number_input('1', min_value=2, max_value=10, value=3, step=1)
-                depth_2 = dep_col2.number_input('2', min_value=2, max_value=10, value=5, step=1)
-                depth_3 = dep_col3.number_input('3', min_value=2, max_value=10, value=7, step=1)
+                depth_1 = dep_col1.number_input('max_depth', min_value=2, max_value=10, value=3, step=1, help="Maximum depth of the tree (array of 3 values)")
+                depth_2 = dep_col2.number_input('', min_value=2, max_value=10, value=5, step=1)
+                depth_3 = dep_col3.number_input('', min_value=2, max_value=10, value=7, step=1)
             
             with col4:
-                classweight = st.radio('Class weight', ["['balanced', 'balanced_subsample']", 'Manual'], index=0, horizontal=True)
+                classweight = st.radio('Class weight', ["['balanced', 'balanced_subsample']", 'Manual'], index=0, horizontal=True, help="Handle class imbalance by assigning weights")
 
             # Grid Search CV and class_weight = {0: 1, 1: neg / pos * multiplication_factor}
             if classweight == 'Manual':
-                with col4:
-                    weight = st.number_input('Enter x (class_weights = {0\: 1, 1: neg/pos * x})', min_value=1.0, max_value=5.0, value=1.0, step=0.5)
+                with col5:
+                    weight = st.number_input('Enter x (class_weights = {0\: 1, 1: neg/pos * x})', min_value=1.0, max_value=5.0, value=1.0, step=0.5, help="Multiplication factor for the minority class")
                 
                 
                 X_train, X_test, y_train, y_test = prepare_data(data)
@@ -866,10 +880,8 @@ with tab6:
                 y_pred_proba = best_model.predict_proba(X_test)[:, 1]
                 evaluate_model(y_test, y_pred, y_pred_proba, f"Random Forest ({estimator_1},{estimator_2},{estimator_3} est, {depth_1}, {depth_2}, {depth_3} dep, cv = {cross_val}, cw [b, b_subsmpl])")    
 
-    
+
     # st.write(st.session_state.metrics_df)
-
-
     # Define styling function (handles non-numeric values)
     def color_threshold(val):
         if isinstance(val, (int, float)):
@@ -889,6 +901,5 @@ with tab6:
         .format("{:.2f}", subset=numeric_cols)  # Force 2 decimal display
         .applymap(color_threshold, subset=numeric_cols)  # Apply coloring
     )
-
     st.dataframe(styled_df)
 
