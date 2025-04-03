@@ -31,10 +31,11 @@ def load_data():
 df = load_data()
 
 #################################################################################################
-#                                           Correlation Matrix                                  #
+#                                    Correlation Matrix                                         #
 #################################################################################################
 
-st.write("##### Correlation Matrix Tables (after label encoding `cb_default`)")
+st.write("")
+st.write("##### Correlation Matrix Tables (after label encoding `loan_grade`)")
 
 df_1 = df.copy()
 df_1['cb_default'] = df_1['cb_default'].map({'N': 0, 'Y': 1})
@@ -48,27 +49,29 @@ corr_matrix_1 = df_1_numerical.corr()
 
 st.table(corr_matrix_1.style.background_gradient(cmap="coolwarm").format("{:.2f}"))
 
-with st.expander("Findings"):
+with st.expander("**Findings**"):
     st.markdown("""
                 - **Inferences:**
-                    - From this correlation plot, we can verify that higher the loan grade, higher the interest rate. But since their correlation is as high as 0.94, we can proceed to drop loan_grade and keep only loan_interest_rate to avoid multicollinearity.
-                    - Age and credit history having a high correlation of 0.88. It is obvious that higher the age, the longer their credit histories would be. We can drop the person_age columnm as well.
+                    - From this correlation plot, we can verify that higher the `loan_grade`, higher the `loan_int_rate`. But since their correlation is as high as 0.94, we can proceed to drop loan_grade and keep only loan_int_rate to avoid multicollinearity.
+                    - `age` and `cb_cred_hist` having a high correlation of 0.88. It is obvious that higher the age, the longer their credit histories would be. We can drop the age columnm as well for aforementioned reasons.
 
                 - **Other observations:**
-                    - cb_default_on_file has a correlation of 0.55 with loan_grade and 0.94 with loan_interest_rate. This means that the loans for defaulters are usually associated with high risk. Hence, the higher interest rate and grade.
-                    - loan_amount has a high correlation of 0.65 with loan_percent_income
-                    - loan_amount has a positive correlation of 0.34 with person_income
+                    - `cb_default` has a correlation of 0.55 with loan_grade and 0.50 with loan_interest_rate. This means that the loans for defaulters are usually associated with high risk. Hence, the higher interest rate and grade.
+                    - `loan_amount` has a high correlation of 0.65 with loan_percent_income indicating that higher the loan amount, the larger it tends to be of a person's income.
+                    - `loan_amount` has a positive correlation of 0.34 with person_income. Indicating that higher income people tend to take larger loans.
 
-                - **Positive correlations with target variable (loan_status):**
-                    - loan_grade
-                    - loan_interest_rate
-                    - loan_percent_income
-                    - cb_person_default_on_file
+                - **Correlations with target variable (loan_status):**
+                    - `loan_grade` (0.39) and `loan_interest_rate` (0.34): indicates that riskier loans associated with higher interest rates have higher chances of loan being defaulted.
+                    - `loan_percent_income` (0.38): higher the commitment of income to loan, higher the chances of default.
+                    - `cb_default` (0.19): indicates that people who defaulted on a loan in the past are more likely to default again.
+                    - `loan_amount` (0.14): indicates that people who take larger loans are more likely to default.
+                    - `person_income` (-0.18) and `emp_length` (-0.18): indicates that people with higher incomes/ longer employment lengths are less likely to default.
                 """)
 
 df_1.drop(['age', 'loan_grade'], axis=1, inplace=True)
 
-# st.markdown('---')
+
+st.text("")
 st.text("")
 st.write("##### Correlation Matrix Tables (after one-hot encoding `loan_intent` and `home_ownership`)")
 df_2 = df_1.copy()
@@ -97,25 +100,23 @@ sns.heatmap(corr_matrix_2, annot=True, fmt=".2f", cmap="coolwarm", cbar=True, sq
 plt.title("Correlation Matrix Heatmap")
 st.pyplot(plt)
 
-# Close the plot to avoid memory issues
 plt.close()
 
-with st.expander("Findings"):
+with st.expander("**Findings**"):
     st.markdown("""
                 - **Key inferences:**
-                    - loan_amount vs loan_int_rate (0.65): indicates that higher loan amounts tend to come with higher interest rates.
-                    - cb_default_on_file vs loan_int_rate (0.5): indicates that people who defaulted on a loan in the past tend to receive higher interest rates as they are considered high risk.
-                    - loan_percent_income vs loan_interest (0.38): suggests that as the percentage of income dedicated to the loan increases, the interest rate also tends to increase.
-                    - person_income vs loan_amount (0.34): suggests that higher-income individuals tend to take larger loans.
-                    - home_ownership vs person_income and person_emp_length:
-                        - Mortgage ownership shows a positive correlation with income (0.30) and employement_length (0.29), indicating that mortgage payment is most common among people with higher incomes and those who are well into their career years.
-                        - Renting is negatively correlated with income (-0.28) and employement_length (-0.29), indicating renters generally have lower incomes and is usually associated with people who are in their early stages of career.
-                    - employment_length vs income (0.18): this weak to moderate positive correlation suggests that longer employment is somewhat associated with higher income.
+                    - There isn't much difference among the correlations various types of `loan_intent`.
+                    - However, the relationship exhibited by two `home_ownership` categories RENT and MORTGAGE are quite interesting.
+                - **Home Ownership:**
+                    - `income` and `emp_length`:
+                        - MORTGAGE: income (0.30) and emp_length (0.29) shows that mortgage seems to be the most common mode of housing ownership for people with higher income and those who are well into their career.
+                        - RENT: income (-0.28) and emp_length (-0.29) shows that renting is more common among people with lower income and those who are just starting their careers.
 
-                - **Correlations with target_variable (loan_status):**
-                    - loan_intents have weak correlations with loan_status, meaning the purpose of the loan might not be a strong predictor.
-                    - person_income has a weak to moderate negative correlated with loan_status (-0.18)
-                    - loan_amount (0.14) and person_default_on_file (0.19) has weak to moderate positive correlations
-                    - loan_interest_rate (0.34) and loan_percent_income (0.38) have moderate positive correlations
-                    - home_ownership_MORTGAGE (-0.20) and home_ownership_RENT (0.24) have moderate correlations
+                    - `loan_int_rate`, `loan_percent_income`, `cb_default`:
+                        - MORTGAGE: loan_int_rate (-0.20), loan_percent_income (-0.16), cb_default (-0.10) shows that people with mortgage tend to have lower interest rates, lower percentage of income committed to loans, and are less likely to default.
+                        - RENT: loan_int_rate (0.20), loan_percent_income (0.15), cb_default (0.24) shows that people with rent tend to have higher interest rates, higher percentage of income committed to loans, and are more likely to default.
+                
+                    - Target varibale (`loan_status`):
+                        - MORTGAGE: loan_status (-0.20) shows that people with mortgage are less likely to default.
+                        - RENT:loan_status (0.24) shows that people with rent are more likely to default.
                 """)

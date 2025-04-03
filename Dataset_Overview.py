@@ -35,10 +35,10 @@ df = load_data()
 
 st.subheader("Problem statement")
 st.markdown("""
-            The approval of loans is a critical decision for financial institutions, influenced by a multitude of factors ranging from applicant demographics to financial behavior.
-            It is also important from an applicant's perspective as to how their personal financial behaviors, housing stability, and credit history influence approval odds, empowering them to make informed decisions when seeking loans.
-            To optimize risk assessment and lending strategies, it is essential to identify the key drivers of loan approval outcomes.
-            This project aims to analyze a dataset containing applicant profiles and loan characteristics and to predict the likelihood of loan approval based on the attributes available in the dataset.
+            Credit risk analysis is crucial for financial institutions, influenced by factors such as applicant demographics, financial behavior, and credit history.
+            It is equally important for applicants to understand how their personal finances, housing stability, and credit history impact their ability to repay loans, enabling them to make informed borrowing decisions.
+            Identifying key drivers of successful loan repayment is essential for improving risk assessment and lending strategies.
+            This project aims to analyze a dataset of applicant profiles and loan characteristics to predict the likelihood of repayment.
             """)
 
 # View dataset
@@ -79,7 +79,7 @@ cols = {
                         'Loan amount as a percentage of the applicant’s annual income',
                         'Indicates if the applicant has a history of defaulting on loans (Y or N)',
                         'Length of the applicant’s credit history (in years)',
-                        'Target variable indicating whether the loan was approved (1) or denied (0)']
+                        'Target variable (0: loan paid off, 1: loan defaulted)']
         }
 
 cols_df = pd.DataFrame(cols)

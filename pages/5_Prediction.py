@@ -61,9 +61,11 @@ encoded_features = one_hot_encoder.fit_transform(df_2[columns_to_encode])
 encoded_df = pd.DataFrame(encoded_features, columns=one_hot_encoder.get_feature_names_out(columns_to_encode), index=df_2.index)
 df_encoded = df_2.drop(columns=columns_to_encode).join(encoded_df)
 
+st.write("")
+
 # Display the encoded dataframe
 data = df_encoded.copy()
-st.write("##### Dataframe for modeling:")
+st.write("##### Dataframe used for modeling")
 st.write(data.head())
 st.write("---")
 
@@ -116,7 +118,7 @@ with col1:
         index=0            # Default selected option (index 0 is 'Logistic Regression')
     )
 with col2:
-    thershold_value = st.number_input('Choose a threshold to color cells', min_value=0.50, max_value=1.0, value=0.75, step=0.05, help="Values great than this will be colored green and less than this will be colored red")
+    thershold_value = st.number_input('Choose a threshold to color cells', min_value=0.50, max_value=1.0, value=0.70, step=0.05, help="Values great than this will be colored green and less than this will be colored red")
 
 # Logistic Regression
 if selected_model == 'Logistic Regression':
@@ -252,7 +254,7 @@ else:
             y_pred = model.predict(X_test)
             y_pred_proba = model.predict_proba(X_test)[:, 1]
             evaluate_model(y_test, y_pred, y_pred_proba, f"Random Forest ({estimators} est, {depth} dep, neg/pos * {weight})")
-    
+
         else:
             # No Grid Search CV and class_weight = balanced
             X_train, X_test, y_train, y_test = prepare_data(data)
@@ -351,7 +353,7 @@ else:
 # Define styling function (handles non-numeric values)
 def color_threshold(val):
     if isinstance(val, (int, float)):
-        return "color: green" if val > thershold_value else "color: red"
+        return "color: green" if val >= thershold_value else "color: red"
     else:
         return ""  # Skip styling for non-numeric values
 

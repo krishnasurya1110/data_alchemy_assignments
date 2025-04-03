@@ -49,16 +49,19 @@ with col2:
 
 def plot_graphs(df, column):
     # Define color mapping
-    color_discrete_map = {0: 'lightcoral', 1: 'mediumaquamarine'}
+    color_discrete_map = {1: 'lightcoral', 0: 'mediumaquamarine'}
+    legend_labels = {0: "paid off", 1: "defaulted"}
 
     if column:
         if pd.api.types.is_numeric_dtype(df[column]):
             
             # Histogram
-            fig_hist = px.histogram(df, x=column, title="Histogram", nbins=30, marginal="box", opacity=0.7, color_discrete_sequence=['skyblue'])
+            fig_hist = px.histogram(df, x=column, title="Histogram", nbins=30, opacity=0.7, color_discrete_sequence=['skyblue'])
 
             # Box plot
             fig_box = px.box(df, y=column, title="Box Plot", color_discrete_sequence=['skyblue'])
+
+            
 
             # KDE plot
             fig_kde = go.Figure()
@@ -69,15 +72,17 @@ def plot_graphs(df, column):
                     histnorm='probability density',
                     opacity=0.6,
                     marker=dict(color=color_discrete_map[loan_status]),
-                    name=f'loan_status {loan_status}'
+                    name=legend_labels.get(loan_status, f"Loan Status {loan_status}"),
                 ))
 
             fig_kde.update_layout(
-                title="Kernel density estimate (KDE) plot",
+                title="Kernel Density Estimate (KDE) Plot",
                 xaxis_title=column,
                 yaxis_title="Density",
-                barmode='overlay'
+                barmode='overlay',
+                legend_title="Loan status",
             )
+            
             fig_kde.update_traces(opacity=0.6)
 
             col1, col2 = st.columns(2)
@@ -122,7 +127,7 @@ def plot_graphs(df, column):
                     go.Bar(
                         x=filtered_df[column].value_counts().index,
                         y=filtered_df[column].value_counts().values,
-                        name=f'{'loan_status'}={status}',
+                        name=legend_labels.get(status, f"Loan Status {status}"),  # Use 'status' instead of 'loan_status'
                         marker_color=color
                     )
                 )
@@ -133,9 +138,10 @@ def plot_graphs(df, column):
                 xaxis_title=column,
                 yaxis_title='Count',
                 barmode='group',  # Grouped bars
-                legend_title='loan_status',
+                legend_title='Loan status',
                 showlegend=True
             )
+
 
             fig_grouped_bar.update_xaxes(tickangle=45)
 
@@ -149,7 +155,7 @@ def plot_graphs(df, column):
                     go.Bar(
                         x=crosstab.index,
                         y=crosstab[status],
-                        name=f'{'loan_status'}={status}',
+                        name=legend_labels.get(status, f"Loan Status {status}"),
                         marker_color=color_discrete_map[i],
                         textposition='auto'
                     )
@@ -161,7 +167,7 @@ def plot_graphs(df, column):
                 xaxis_title=column,
                 yaxis_title=f'Percentage of {'loan_status'}',
                 barmode='stack',  # Stacked bars
-                legend_title='loan_status',
+                legend_title='Loan status',
                 showlegend=True
             )
 
